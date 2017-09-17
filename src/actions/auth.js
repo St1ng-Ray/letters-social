@@ -56,31 +56,33 @@ export function logout() {
 export function login() {
     return dispatch => {
         return loginWithGithub().then(async () => {
-            try {
-                dispatch(loading());
-                const user = await getFirebaseUser();
-                const token = await getFirebaseToken();
-                const res = await API.loadUser(user.uid);
-                if (res.status === 404) {
-                    const userPayload = {
-                        name: user.displayName,
-                        profilePicture: user.photoURL,
-                        id: user.uid
-                    };
-                    const newUser = await API.createUser(userPayload).then(res => res.json());
-                    dispatch(loginSuccess(newUser, token));
-                    dispatch(loaded());
-                    history.push('/');
-                    return newUser;
-                }
-                const existingUser = await res.json();
-                dispatch(loginSuccess(existingUser, token));
+            dispatch(loading());
+            const user = await getFirebaseUser();
+            const token = await getFirebaseToken();
+            const res = await fetch(`${process.env.ENDPOINT}/users/${user.uid}`);
+            if (res.status === 404) {
+                const userPayload = {
+                    name: user.displayName,
+                    profilePicture: user.photoURL,
+                    id: user.uid
+                };
+                const newUser = await fetch(`${process.env.ENDPOINT}/users`, {
+                    method: 'POST',
+                    body: JSON.stringify(userPayload),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(res => res.json());
+                dispatch(loginSuccess(newUser, token));
                 dispatch(loaded());
                 history.push('/');
-                return existingUser;
-            } catch (err) {
-                createError(err);
+                return newUser;
             }
+            const existingUser = await res.json();
+            dispatch(loginSuccess(existingUser, token));
+            dispatch(loaded());
+            history.push('/');
+            return existingUser;
         });
     };
 }

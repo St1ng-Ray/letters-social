@@ -6,6 +6,7 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import favicon from 'serve-favicon';
+import favicon from 'serve-favicon';
 import hpp from 'hpp';
 import logger from 'morgan';
 import cookieParser from 'cookie-parser';
@@ -14,11 +15,13 @@ import * as firebase from 'firebase-admin';
 import config from 'config';
 
 // Initialize Firebase
+// Initialize Firebase
 firebase.initializeApp({
     credential: firebase.credential.cert(JSON.parse(process.env.LETTERS_FIREBASE_ADMIN_KEY)),
     databaseURL: 'https://letters-social.firebaseio.com'
 });
 
+// Our dummy database backend
 // Our dummy database backend
 import DB from '../db/DB';
 
@@ -29,6 +32,7 @@ import { match, RouterContext } from 'react-router';
 import { Provider } from 'react-redux';
 
 // Modules from the client-side of things
+// Modules from the client-side of things
 import configureStore from '../src/store/configureStore';
 import initialReduxState from '../src/constants/initialState';
 import * as HTML from '../src/components/HTML';
@@ -37,6 +41,7 @@ import { loginSuccess } from '../src/actions/auth';
 import { getPostsForPage } from '../src/actions/posts';
 import { createError } from '../src/actions/error';
 
+// Create the express app and database
 // Create the express app and database
 const app = express();
 const backend = DB();
@@ -50,9 +55,11 @@ app.use(helmet.ieNoOpen());
 app.use(helmet.noSniff());
 app.use(helmet.hidePoweredBy({ setTo: 'react' }));
 app.use(compression());
+app.use(compression());
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(hpp());
+app.use(cors({ origin: config.get('ORIGINS') }));
 app.use(cors({ origin: config.get('ORIGINS') }));
 
 // other Route handlers
@@ -60,12 +67,10 @@ app.use('/api', backend);
 app.use('/static', express.static(resolve(__dirname, '..', 'static')));
 app.use(favicon(resolve(__dirname, '..', 'static', 'assets', 'meta', 'favicon.ico')));
 app.use('*', (req, res) => {
+app.use(favicon(resolve(__dirname, '..', 'static', 'assets', 'meta', 'favicon.ico')));
+app.use('*', (req, res) => {
     // Use React Router to match the incoming URL to a path
     match({ routes: routes, location: req.originalUrl }, async (err, redirectLocation, props) => {
-        // Only redirect if necessary and if the user isn't on the login page (to prevent a loop)
-        if (redirectLocation && req.originalUrl !== '/login') {
-            return res.redirect(302, redirectLocation.pathname + redirectLocation.search);
-        }
         // Create the store server-side using initial state constant
         const store = configureStore(initialReduxState);
         try {
@@ -107,16 +112,15 @@ app.use('*', (req, res) => {
                 <RouterContext {...props} />
             </Provider>
         );
-        renderStream.pipe(res, { end: false });
-        renderStream.on('end', () => {
-            res.write(HTML.end(store.getState()));
-            res.end();
-        });
+        const renderStream = renderToNodeStream(html);
+        res.setHeader('Content-type', 'text/html; charset=UTF-8');
+        return renderStream.pipe(res);
     });
 });
 
 // Error handling routes
 app.use((req, res, next) => {
+    const err = new Error('Not found');
     const err = new Error('Not found');
     err.status = 404;
     next(err);

@@ -38,13 +38,14 @@ async function requireUser(nextState, replace, callback) {
         const firebaseUser = await getFirebaseUser();
         const fireBaseToken = await getFirebaseToken();
         const noUser = !firebaseUser || !fireBaseToken;
-        if (noUser && !isOnLoginPage && !isServer()) {
+        if (noUser && !isOnLoginPage) {
             replace({
                 pathname: '/login'
             });
             return callback();
         }
         // If there's no user BUT we're on the login page, proceed
+        if (noUser && isOnLoginPage) {
         if (noUser && isOnLoginPage) {
             return callback();
         }
@@ -55,6 +56,7 @@ async function requireUser(nextState, replace, callback) {
     } catch (err) {
         store.dispatch(createError(err));
         return callback(err);
+        return callback(err);
     }
 }
 
@@ -63,6 +65,9 @@ async function requireUser(nextState, replace, callback) {
  * @module letters/components
  */
 export const routes = (
+    <Route path="/" component={App}>
+        <IndexRoute component={Home} onEnter={requireUser} />
+        <Route path="/posts/:postId" component={SinglePost} onEnter={requireUser} />
     <Route path="/" component={App}>
         <IndexRoute component={Home} onEnter={requireUser} />
         <Route path="/posts/:postId" component={SinglePost} onEnter={requireUser} />
