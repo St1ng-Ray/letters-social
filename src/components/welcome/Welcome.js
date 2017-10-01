@@ -1,9 +1,5 @@
 import React from 'react';
 
-/**
- * Welcome component renders a welcome message, nothing else!
- * @method Welcome
- */
 const Welcome = () => {
     return (
         <div>
