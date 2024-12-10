@@ -34,7 +34,7 @@ class App extends Component {
         children: PropTypes.node,
     };
     componentDidMount() {
-        this.getPosts();
+        // this.getPosts();
     }
     componentDidCatch(err, info) {
         console.error(err);

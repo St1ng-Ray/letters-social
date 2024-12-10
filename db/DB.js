@@ -10,7 +10,7 @@ export default () => {
     const server = jsonAPI.create();
     server.use(jsonAPI.defaults());
     server.use(jsonAPI.bodyParser);
-    server.post((req, res, next) => {
+    server.post('/posts', (req, res, next) => {
         req.body.id = uuid();
         req.body.date = new Date().getTime();
         return next();
